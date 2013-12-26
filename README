@@ -1,1 +1,174 @@
-bande de chiens maigres
+#include <iostream>
+#include <vector>
+#include <string>
+#include <utility>
+
+using namespace std;
+
+typedef vector <char> CVLine; // un type représentant une ligne de la grille
+typedef vector <CVLine> CMatrix; // un type représentant la grille
+typedef pair   <unsigned, unsigned> CPosition; // un type représentant une coordonnée dans la grille
+
+namespace
+{
+	const string KReset   ("0");
+	const string KNoir    ("30");
+	const string KRouge   ("31");
+	const string KVert    ("32");
+	const string KJaune   ("33");
+	const string KBleu    ("34");
+	const string KMAgenta ("35");
+	const string KCyan    ("36");
+	const char KTokenPlayer1 = 'X';
+	const char KTokenPlayer2 = 'O';
+	const char KEmpty        = ' ';
+
+	void ClearScreen ()
+	{
+		cout << "\033[H\033[2J";
+	} //ClearScreen()
+
+	void Couleur (const string & coul)
+	{
+		cout << "\033[" << coul <<"m";
+	} //Couleur(couleur)
+
+	void ShowMatrix (const CMatrix & Mat)
+	{
+		ClearScreen();
+		Couleur (KReset);
+		for(unsigned i=0; i<Mat.size(); ++i)
+		{
+			for(unsigned j=0; j<Mat[i].size(); ++j)
+			{
+				if(Mat[i][j]==KTokenPlayer1)
+					Couleur (KVert);
+				else if(Mat[i][j]==KTokenPlayer2)
+					Couleur (KRouge);
+				Couleur (KReset);
+				cout << "|" << Mat[i][j];
+			}
+			cout << "|" << endl;
+		}
+	} //ShowMatrix (Matrice)
+
+	void InitMat (CMatrix & Mat, unsigned NbLine, unsigned NbColumn, CPosition & PosPlayer1, CPosition & PosPlayer2)
+	{
+		Mat.resize(NbLine);
+		for(unsigned i=0; i<NbLine; ++i)
+		{
+			Mat[i].resize(NbColumn);
+			for(unsigned j=0; j<NbColumn; ++j)
+			{
+				Mat[i][j]=KEmpty;
+			}
+		}
+		Mat[PosPlayer1.first][PosPlayer1.second]=KTokenPlayer1;
+		Mat[PosPlayer2.first][PosPlayer2.second]=KTokenPlayer2;
+
+	} //InitMat(Mat,NbLine,NbColumn,PosPlayer1,PosPlayer2)
+
+	void MoveToken (CMatrix & Mat, char Move, CPosition  & Pos)
+	{
+		switch (Move)
+		{
+			case ('a' | 'A'):
+                Mat[Pos.first][Pos.second]=KEmpty;
+                Mat[++Pos.first][++Pos.second];
+				//swap(Mat[Pos.first][Pos.second],Mat[--Pos.first][--Pos.second]);
+				break;
+			case ('z' | 'Z'):
+				swap(Mat[Pos.first][Pos.second],Mat[--Pos.first][Pos.second]);
+				break;
+			case ('e' | 'E'):
+				swap(Mat[Pos.first][Pos.second],Mat[--Pos.first][++Pos.second]);
+				break;
+			case ('d' | 'D'):
+				swap(Mat[Pos.first][Pos.second],Mat[Pos.first][++Pos.second]);
+				break;
+			case ('c' | 'C'):
+				swap(Mat[Pos.first][Pos.second],Mat[++Pos.first][++Pos.second]);
+				break;
+			case ('x' | 'X'):
+				swap(Mat[Pos.first][Pos.second],Mat[++Pos.first][Pos.second]);
+				break;
+			case ('w' | 'W'):
+				swap(Mat[Pos.first][Pos.second],Mat[++Pos.first][--Pos.second]);
+				break;
+			case ('q' | 'Q'):
+				swap(Mat[Pos.first][Pos.second],Mat[Pos.first][--Pos.second]);
+				break;
+		}
+	} //MoveToken(Mat,Move,Pos)
+
+    void Solo ()
+    {
+
+    }// Solo()
+
+    void Multijoueur ()
+    {
+        cout << "Bienvenue dans le mode multijoueur."<< endl;
+        cout << "Veuillez saisir le nombre de lignes dont disposera la grille de jeu."<< endl;
+		unsigned NbLine;
+		cin >> NbLine;
+		cout << "Veuillez saisir le nombre de colonnes dont disposera la grille de jeu."<< endl;
+		unsigned NbColumn;
+		cin >> NbColumn;
+		cout << "Veuillez saisir le nombre de coups possibles durant la partie."<< endl;
+		unsigned NbCoups;
+		cin >> NbCoups;
+		vector<vector<char> > Mat;
+		CPosition PosPlayer1 = make_pair(NbLine-1,0);
+		CPosition PosPlayer2 = make_pair(0,NbColumn-1);
+		InitMat (Mat,NbLine,NbColumn,PosPlayer1,PosPlayer2);
+		ShowMatrix (Mat);//on rend visible la matric avant même que les joueurs commencent à jouer sinon c'est jouer le premier coups à l'aveuglette.
+		bool Victory (false);
+		for(unsigned i=0; i<NbCoups; ++i)
+		{
+			cout << "coups numéro " << i+1 << " Joueur 1, saisissez un caractere : ";
+			char Move;
+			cin >> Move;
+			MoveToken(Mat,Move,PosPlayer1);
+			ShowMatrix (Mat);
+			if (PosPlayer1 == PosPlayer2)
+			{
+				Victory=true;
+				break;
+			}
+			cout << "coups numéro " << i+1 << " Joueur 2, saisissez un caractere : ";
+            cin >> Move;
+			MoveToken(Mat,Move,PosPlayer2);
+			ShowMatrix (Mat);
+			if (PosPlayer2 == PosPlayer1)
+			{
+				Victory=true;
+				break;
+			}
+		}
+		if (Victory == false)
+            cout << "Egalité, nombre de coups maximum atteint";
+    }//
+
+	int run ()
+	{
+	    cout << "choisissisez votre mode de jeu (solo, multijoueur)."<< endl;
+	    string ModeJeu;
+	    while (ModeJeu != "multijoueur" || ModeJeu != "solo")
+        {
+            cin >> ModeJeu;
+            if (ModeJeu == "solo");
+                Solo();//attention la fonction Solo détient une majuscule
+            if (ModeJeu == "multijoueur")
+                Multijoueur();//attention la fonction Multijoueur détient une majuscule
+            else
+                cout << "Mauvaise saisie. Tapez multijoueur ou solo."<< endl;
+        }
+		return 0;
+	} //ppal()
+}//namespace
+
+int main ()
+{
+	run ();
+} // int main
